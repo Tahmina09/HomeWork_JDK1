@@ -16,8 +16,6 @@ public class ClientGUI extends JFrame {
     JTextArea log;
     JTextField loginField, passwordField, IPField, portField, messageField;
     JButton sendMessageButton, loginButton;
-    private String [] data = new String[]{"Vlad", "Masha", "Kira", "Phillip", "Victor"};;
-    JList <String> clientList;
     private boolean connected;
 
     ClientGUI(ServerWindow server) {
@@ -30,7 +28,6 @@ public class ClientGUI extends JFrame {
 
         add(createTextFields(), BorderLayout.NORTH);
         add(createTextAndButtonArea(), BorderLayout.SOUTH);
-        add(createDataList());
         add(createLog());
         setVisible(true);
     }
@@ -64,8 +61,7 @@ public class ClientGUI extends JFrame {
         messageField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                appendLog(messageField.getText());
-                messageField.setText(null);
+                sendMessage();
             }
         });
 
@@ -73,8 +69,7 @@ public class ClientGUI extends JFrame {
         sendMessageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                appendLog(messageField.getText());
-                messageField.setText(null);
+                sendMessage();
             }
         });
 
@@ -83,6 +78,18 @@ public class ClientGUI extends JFrame {
         return textBtnPanel;
     }
 
+    private void sendMessage() {
+        if (connected) {
+            name = loginField.getText();
+            String text = messageField.getText();
+            if (!text.equals("")) {
+                server.message(name + ": " + text);
+                messageField.setText(null);
+            }
+        } else {
+            appendLog("Не удалось подключиться к серверу!");
+        }
+    }
 
     private Component createLog() {
         log = new JTextArea();
@@ -95,9 +102,8 @@ public class ClientGUI extends JFrame {
         log.append(str + "\n");
     }
 
-    private Component createDataList() {
-        clientList = new JList<>(data);
-        return clientList;
+    public void answer(String str) {
+        appendLog(str);
     }
 
     public void connectServer() {
@@ -105,9 +111,20 @@ public class ClientGUI extends JFrame {
             appendLog("Подключение прошло успешно!");
             connected = true;
             name = loginField.getText();
-            appendLog(server.getLog());
+            String log = server.getLog();
+            if (log != null) {
+                appendLog(log);
+            }
         } else {
             appendLog("Не удалось подключиться к серверу!");
+        }
+    }
+
+    public void disconnectServer() {
+        if (connected){
+            connected = false;
+            server.disconnectUser(this);
+            appendLog("Вы отключились от сервера!");
         }
     }
 }

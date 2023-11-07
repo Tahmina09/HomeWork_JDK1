@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServerWindow extends JFrame {
     private static final int WINDOW_HEIGHT = 500;
@@ -13,6 +15,7 @@ public class ServerWindow extends JFrame {
     private static final int WINDOW_POSY = 100;
     private static final String FILE_NAME = "log.txt";
     ClientGUI clientGUI;
+    List<ClientGUI> clientGUIList;
     JButton btnStart, btnStop;
     JTextArea log;
     private boolean isServerWorking;
@@ -24,6 +27,7 @@ public class ServerWindow extends JFrame {
         setTitle("Chat server");
         setResizable(false);
         isServerWorking = false;
+        clientGUIList = new ArrayList<>();
 
         add(createTextArea());
         add(createButtonPanel(), BorderLayout.SOUTH);
@@ -53,8 +57,10 @@ public class ServerWindow extends JFrame {
                     log.append("Server is already stopped!\n");
                 } else {
                     isServerWorking = false;
+                    for (ClientGUI clientGUI : clientGUIList) {
+                        disconnectUser(clientGUI);
+                    }
                     log.append("Server stopped!\n");
-
                 }
             }
         });
@@ -102,12 +108,34 @@ public class ServerWindow extends JFrame {
         log.append(str + "\n");
     }
 
+    private void answerAll(String text) {
+        for (ClientGUI clientGUI: clientGUIList) {
+            clientGUI.answer(text);
+        }
+    }
+
     public boolean connectUser(ClientGUI clientGUI) {
         if (!isServerWorking) {
             return false;
         }
+        clientGUIList.add(clientGUI);
         return true;
     }
 
+    public void disconnectUser(ClientGUI clientGUI) {
+        clientGUIList.remove(clientGUI);
+        if (clientGUIList != null) {
+            clientGUI.disconnectServer();
+        }
+    }
+
+    public void message(String text) {
+        if (!isServerWorking) {
+            appendLog("Не удалось подключиться к серверу!");
+        }
+        appendLog(text);
+        answerAll(text);
+        fileWriter(text);
+    }
 
 }
